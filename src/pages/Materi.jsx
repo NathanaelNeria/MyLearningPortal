@@ -2,15 +2,20 @@ import { useState } from 'react';
 import { MATERI } from '../data/materi.js';
 import { KATEGORI } from '../data/challenges.js';
 import { runQuery } from '../lib/db.js';
+import { translateMySQL } from '../lib/dialect.js';
 import ResultTable from '../components/ResultTable.jsx';
+import { useDialect } from '../lib/useDialect.js';
 import { nav } from '../lib/router.js';
 
-function ContohBlock({ sql, db }) {
+function ContohBlock({ sql, db, mysql }) {
   const [res, setRes] = useState(null);
   const [err, setErr] = useState(null);
+  const dialek = useDialect();
   const jalankan = () => {
     try {
-      setRes(runQuery(db, sql));
+      // Contoh bertanda mysql selalu diterjemahkan; contoh lain ikut dialek aktif.
+      const final = mysql || dialek === 'mysql' ? translateMySQL(sql) : sql;
+      setRes(runQuery(db, final));
       setErr(null);
     } catch (e) {
       setErr(e.message);
@@ -41,6 +46,11 @@ export default function Materi({ db }) {
   const [aktif, setAktif] = useState('dasar');
   const materi = MATERI.find((m) => m.kategori === aktif);
   const kat = KATEGORI.find((k) => k.id === aktif);
+  // Tab = 7 jalur soal + materi ekstra di luar jalur (mis. Mode MySQL).
+  const tabs = [
+    ...KATEGORI.map((k) => ({ id: k.id, nama: k.nama })),
+    ...MATERI.filter((m) => !KATEGORI.some((k) => k.id === m.kategori)).map((m) => ({ id: m.kategori, nama: m.judul })),
+  ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -48,7 +58,7 @@ export default function Materi({ db }) {
       <p className="text-sm text-slate-500 mb-5">Ringkasan konsep per jalur — semua contoh bisa langsung dijalankan.</p>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {KATEGORI.map((k) => (
+        {tabs.map((k) => (
           <button
             key={k.id}
             onClick={() => setAktif(k.id)}
@@ -69,16 +79,18 @@ export default function Materi({ db }) {
               className="text-sm text-slate-600 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: s.isi.replace(/`(.+?)`/g, '<code class="font-mono text-[12px] bg-slate-100 px-1 rounded">$1</code>') }}
             />
-            <ContohBlock sql={s.contoh} db={db} />
+            <ContohBlock sql={s.contoh} db={db} mysql={s.mysql} />
           </div>
         ))}
       </div>
 
-      <div className="mt-6 text-center">
-        <button onClick={() => nav(`/soal?k=${aktif}`)} className="text-sm font-semibold text-brand-600 hover:text-brand-700">
-          Latihan soal {kat?.nama} →
-        </button>
-      </div>
+      {kat && (
+        <div className="mt-6 text-center">
+          <button onClick={() => nav(`/soal?k=${aktif}`)} className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            Latihan soal {kat.nama} →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { getChallenge, CHALLENGES, KATEGORI, TINGKAT } from '../data/challenges.js';
 import { runQuery, isReadOnly } from '../lib/db.js';
+import { translateMySQL } from '../lib/dialect.js';
 import { compareResults } from '../lib/grader.js';
 import { markSolved, getProgress } from '../lib/progress.js';
 import { nav } from '../lib/router.js';
 import SqlEditor from '../components/SqlEditor.jsx';
 import ResultTable from '../components/ResultTable.jsx';
 import SchemaBrowser from '../components/SchemaBrowser.jsx';
-import { TingkatBadge, KategoriBadge, CheckIcon } from '../components/ui.jsx';
+import { TingkatBadge, KategoriBadge, CheckIcon, DialectToggle } from '../components/ui.jsx';
+import { useDialect } from '../lib/useDialect.js';
 
 const draftKey = (id) => `belajarsql-draft-${id}`;
 
@@ -28,6 +30,7 @@ export default function ChallengeDetail({ id, db }) {
   const [showSolution, setShowSolution] = useState(false);
   const [running, setRunning] = useState(false);
   const [, force] = useState(0);
+  const dialek = useDialect();
 
   const idx = CHALLENGES.findIndex((c) => c.id === id);
   const prev = CHALLENGES[idx - 1];
@@ -51,13 +54,14 @@ export default function ChallengeDetail({ id, db }) {
 
   const runUser = () => {
     if (!db) return;
-    if (!isReadOnly(code)) {
+    const sql = dialek === 'mysql' ? translateMySQL(code) : code;
+    if (!isReadOnly(sql)) {
       setFeedback({ type: 'err', msg: 'Hanya query SELECT/WITH yang diizinkan di sini.' });
       setResult(null);
       return;
     }
     try {
-      const res = runQuery(db, code);
+      const res = runQuery(db, sql);
       setResult(res);
       setTab('hasil');
       setFeedback({ type: 'info', msg: `Query jalan — ${res.rows.length} baris hasil. Kalau sudah yakin, klik Submit Jawaban.` });
@@ -71,13 +75,14 @@ export default function ChallengeDetail({ id, db }) {
     if (!db || running) return;
     setRunning(true);
     try {
-      if (!isReadOnly(code)) {
+      const sql = dialek === 'mysql' ? translateMySQL(code) : code;
+      if (!isReadOnly(sql)) {
         setFeedback({ type: 'err', msg: 'Hanya query SELECT/WITH yang diizinkan.' });
         return;
       }
       const exp = runQuery(db, challenge.solusi);
       setExpected(exp);
-      const act = runQuery(db, code);
+      const act = runQuery(db, sql);
       setResult(act);
       const verdict = compareResults(exp, act, challenge.orderMatters);
       if (verdict.ok) {
@@ -102,6 +107,8 @@ export default function ChallengeDetail({ id, db }) {
   };
 
   const lintas = challenge.orderMatters ? ' + urutan baris' : '';
+  // Di mode MySQL, tampilkan solusi versi MySQL kalau soal menyediakannya.
+  const solusiTampil = dialek === 'mysql' && challenge.solusiMysql ? challenge.solusiMysql : challenge.solusi;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-5">
@@ -192,10 +199,10 @@ export default function ChallengeDetail({ id, db }) {
             {showSolution ? (
               <>
                 <pre className="rounded-xl bg-ink-900 text-emerald-200 text-[13px] font-mono p-4 overflow-x-auto scroll-thin whitespace-pre-wrap">
-                  {challenge.solusi}
+                  {solusiTampil}
                 </pre>
                 <button
-                  onClick={() => persist(challenge.solusi)}
+                  onClick={() => persist(solusiTampil)}
                   className="mt-2 text-xs font-semibold text-brand-600 hover:text-brand-700"
                 >
                   Salin ke editor ↗
@@ -215,8 +222,13 @@ export default function ChallengeDetail({ id, db }) {
         <div className="space-y-3 lg:sticky lg:top-4">
           <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Editor SQL</span>
-              <span className="text-[11px] text-slate-400">Ctrl+Enter = Jalankan</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Editor SQL{dialek === 'mysql' ? ' · MySQL → SQLite' : ''}
+              </span>
+              <span className="flex items-center gap-2">
+                <DialectToggle />
+                <span className="text-[11px] text-slate-400">Ctrl+Enter = Jalankan</span>
+              </span>
             </div>
             <div className="h-56">
               <SqlEditor value={code} onChange={persist} onRun={runUser} height="224px" />

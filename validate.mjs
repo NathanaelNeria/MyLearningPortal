@@ -2,6 +2,7 @@
 import initSqlJs from 'sql.js';
 import { buildSchemaSQL } from './src/data/schema.js';
 import { CHALLENGES } from './src/data/challenges.js';
+import { registerMySQLFunctions, translateMySQL } from './src/lib/dialect.js';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -10,6 +11,7 @@ const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm');
 const SQL = await initSqlJs({ locateFile: () => wasmPath });
 const db = new SQL.Database();
 db.exec(buildSchemaSQL());
+registerMySQLFunctions(db);
 
 let fail = 0;
 for (const c of CHALLENGES) {
@@ -21,6 +23,20 @@ for (const c of CHALLENGES) {
     if (rows === 0) fail++;
   } catch (e) {
     console.log(`!!ERROR ${c.id}: ${e.message}`);
+    fail++;
+  }
+}
+
+// Solusi versi MySQL (kalau soal menyediakan) — harus lolos terjemahan + eksekusi.
+for (const c of CHALLENGES) {
+  if (!c.solusiMysql) continue;
+  try {
+    const res = db.exec(translateMySQL(c.solusiMysql));
+    const rows = res.length ? res[res.length - 1].values.length : 0;
+    console.log(`${rows === 0 ? '!!KOSONG' : 'ok'} | ${c.id} (mysql) | ${rows} baris`);
+    if (rows === 0) fail++;
+  } catch (e) {
+    console.log(`!!ERROR ${c.id} (mysql): ${e.message}`);
     fail++;
   }
 }

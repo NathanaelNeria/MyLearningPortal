@@ -192,4 +192,34 @@ export const MATERI = [
       },
     ],
   },
+  {
+    kategori: 'mysql',
+    judul: 'Mode MySQL',
+    sections: [
+      {
+        judul: 'Cara kerja mode MySQL',
+        isi: "Aktifkan toggle `MySQL` di toolbar editor (soal & playground). Yang kamu tulis diterjemahkan otomatis ke SQLite sebelum jalan: backtick `&#96;nama&#96;` → `\"nama\"`, `LIMIT 5,10` → `LIMIT 10 OFFSET 5`, `DESCRIBE t` → `PRAGMA table_info(t)`, `SHOW TABLES` → query `sqlite_master`, komentar `#` di awal baris → `--`.",
+        contoh: 'SHOW TABLES;',
+        mysql: true,
+      },
+      {
+        judul: 'Fungsi MySQL yang tersedia',
+        isi: '`IF()`, `IFNULL()`, `CONCAT()` variadic, `LEFT()/RIGHT()/MID()`, `LPAD()/RPAD()`, `LOCATE()`, `SUBSTRING_INDEX()`, `ELT()`, `FIELD()`, plus matematika `POW()`, `TRUNCATE()`, `GREATEST()/LEAST()`, `FORMAT()`, `CONV()`. Contoh lain: `DESCRIBE produk` dan backtick identifier.',
+        contoh: "SELECT `nama`, IF(harga > 500000, 'premium', 'reguler') AS kelas, CONCAT('Rp ', FORMAT(harga, 0)) AS label FROM `produk` ORDER BY harga DESC LIMIT 5;",
+        mysql: true,
+      },
+      {
+        judul: 'Tanggal ala MySQL',
+        isi: "`strftime('%Y-%m', t)` ↔ `DATE_FORMAT(t, '%Y-%m')`. Tersedia juga `NOW()/CURDATE()/CURTIME()`, `YEAR()/MONTH()/DAY()/HOUR()`, `DATEDIFF()`, `TIMESTAMPDIFF()`, `DATE_ADD()/DATE_SUB()` dengan `INTERVAL n UNIT`, `LAST_DAY()`, `DAYNAME()/MONTHNAME()`.",
+        contoh: "SELECT tanggal, DATE_FORMAT(tanggal, '%Y-%m') AS bulan, DATE_ADD(tanggal, INTERVAL 7 DAY) AS plus_7_hari, LAST_DAY(tanggal) AS akhir_bulan FROM pesanan LIMIT 5;",
+        mysql: true,
+      },
+      {
+        judul: 'Batasan (jujur)',
+        isi: 'Cakupannya subset MySQL yang umum di tes basic — bukan 100% MySQL, jadi syntax aneh tetap kena error (itu bagian latihan). `NOW()` pakai UTC, `REGEXP` pakai syntax JavaScript, `MD5()` hanya stub, komentar `#` dikenali hanya di awal baris. Kalau error `no such function`, fungsinya belum dipetakan — cari ekuivalen SQLite-nya.',
+        contoh: 'DESCRIBE produk;',
+        mysql: true,
+      },
+    ],
+  },
 ];

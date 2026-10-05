@@ -8,6 +8,7 @@ Database SQLite sungguhan (sql.js / WASM) berjalan di browser — tidak perlu ba
 
 - **50 Tantangan SQL** (7 jalur: Dasar → Filtering → Agregasi → JOIN → Subquery & CTE → Window Functions → Advanced) dengan auto-grading, petunjuk bertingkat, dan solusi.
 - **Playground** — editor SQL bebas dengan dataset TokoNusantara; bisa dipakai sebagai tool SQL online saat tes.
+- **Mode MySQL** — toggle SQLite/MySQL di toolbar editor; yang kamu tulis pakai syntax MySQL diterjemahkan otomatis ke SQLite (backtick, `LIMIT n,m`, `DESCRIBE`, `SHOW TABLES`, `INTERVAL`, `<=>`, `DIV`, dll) plus ~70 fungsi MySQL (`IF`, `CONCAT`, `NOW`, `DATEDIFF`, `DATE_FORMAT`, `DATE_ADD`...) sebagai UDF. Di Playground kamu bisa lihat SQL hasil terjemahannya.
 - **Materi** — cheat-sheet per konsep dengan contoh query yang bisa langsung dijalankan.
 - **Flowchart** — kamus simbol, quiz simbol, latihan membaca flowchart, dan latihan menggambar dengan contoh solusi.
 - **Math Logic** — 18 soal deret/aritmetika/logika dengan pembahasan + mode simulasi 10 soal/15 menit.
@@ -45,10 +46,11 @@ src/
   data/flowchart.js    simbol, quiz, dan flowchart (node/edge berkoordinat)
   data/logika.js       bank soal math logic
   lib/db.js            init sql.js + helper query (read-only)
+  lib/dialect.js       mode MySQL: terjemahan syntax + UDF MySQL
   lib/grader.js        pembanding hasil query vs solusi
   lib/progress.js      XP/level/selesai di localStorage
   pages/               Dashboard, ChallengeList, ChallengeDetail,
                        Playground, Materi, Flowchart, Logika
 ```
 
-Dialek SQL: **SQLite** (perbedaan kecil dengan MySQL: `strftime` untuk tanggal, `||` untuk gabung string, tanpa `IF()` — pakai `CASE WHEN`).
+Dialek SQL: **SQLite** secara default. Aktifkan **Mode MySQL** di toolbar editor untuk menulis syntax MySQL — diterjemahkan otomatis + fungsi MySQL tersedia sebagai UDF (subset umum yang relevan untuk tes, bukan 100% MySQL). Detail pemetaan & batasannya ada di tab Materi → **Mode MySQL**.

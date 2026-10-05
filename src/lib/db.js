@@ -1,6 +1,7 @@
 import initSqlJs from 'sql.js';
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { buildSchemaSQL } from '../data/schema.js';
+import { registerMySQLFunctions } from './dialect.js';
 
 let dbPromise = null;
 
@@ -9,6 +10,7 @@ export function getDb() {
     dbPromise = initSqlJs({ locateFile: () => wasmUrl }).then((SQL) => {
       const db = new SQL.Database();
       db.exec(buildSchemaSQL());
+      registerMySQLFunctions(db); // fungsi MySQL (IF, DATE_FORMAT, dst) untuk mode MySQL
       return db;
     });
   }
@@ -31,6 +33,8 @@ export function isReadOnly(sql) {
     .trim()
     .toLowerCase();
   if (!cleaned) return false;
+  // PRAGMA table_info = target terjemahan DESCRIBE di mode MySQL; pragma lain tetap dilarang.
+  if (/^pragma\s+table_info\s*\([^)]*\)\s*;?\s*$/.test(cleaned)) return true;
   const forbidden = /\b(insert|update|delete|drop|alter|create|replace|attach|detach|pragma|vacuum|reindex|truncate)\b/;
   return /^(select|with|explain)\b/.test(cleaned) && !forbidden.test(cleaned);
 }
