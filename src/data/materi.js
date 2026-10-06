@@ -193,6 +193,116 @@ export const MATERI = [
     ],
   },
   {
+    kategori: 'string',
+    judul: 'String & Teks',
+    sections: [
+      {
+        judul: 'Menggabungkan teks',
+        isi: "SQLite: operator `||` — `'Halo ' || nama`. MySQL: fungsi `CONCAT(a, b, ...)` yang bisa banyak argumen. Beda konsep penting: `||` adalah operator (2 sisi), `CONCAT` adalah fungsi (N argumen). NULL ikut `||` → NULL; `CONCAT` juga begitu — pakai `COALESCE` kalau perlu.",
+        contoh: "SELECT nama || ' (' || kota || ')' AS label FROM pelanggan LIMIT 5;",
+      },
+      {
+        judul: 'Memotong & mencari posisi',
+        isi: "`SUBSTR(teks, awal, panjang)` memotong (indeks mulai 1!). `INSTR(teks, 'cari')` mengembalikan posisi pertama ditemukan (0 kalau tidak ada). MySQL: `SUBSTRING`/`LEFT`/`RIGHT`/`MID`, `LOCATE(cari, teks)`, dan `SUBSTRING_INDEX(teks, '@', -1)` untuk ambil teks setelah pemisah terakhir — sangat praktis untuk domain email.",
+        contoh: "SELECT nama, SUBSTR(email, INSTR(email, '@') + 1) AS domain FROM pelanggan WHERE email IS NOT NULL LIMIT 5;",
+      },
+      {
+        judul: 'Panjang, casing, trim, ganti',
+        isi: "`LENGTH(t)` jumlah karakter. `UPPER`/`LOWER` ubah huruf. `TRIM` buang spasi di dua ujung (`LTRIM`/`RTRIM` satu sisi). `REPLACE(t, dari, ke)` ganti substring. MySQL menambah `LPAD`/`RPAD` untuk padding dan `REVERSE`/`REPEAT`.",
+        contoh: "SELECT nama, UPPER(SUBSTR(nama, 1, 3)) AS kode, LENGTH(nama) AS panjang FROM produk ORDER BY panjang LIMIT 5;",
+      },
+    ],
+  },
+  {
+    kategori: 'tanggal',
+    judul: 'Tanggal & Waktu',
+    sections: [
+      {
+        judul: 'Format & potong tanggal',
+        isi: "SQLite simpan tanggal sebagai TEXT 'YYYY-MM-DD', jadi bisa dipotong/diformat dengan `strftime('%Y-%m', kolom)` (tahun-bulan), `strftime('%d-%m-%Y')` (DD-MM-YYYY). MySQL: `DATE_FORMAT(kolom, '%Y-%m')` — specifier % sama! Ini alasan soal-soal tanggal di sini punya dua versi solusi.",
+        contoh: "SELECT strftime('%d-%m-%Y', tanggal) AS tanggal_indo, status FROM pesanan LIMIT 5;",
+      },
+      {
+        judul: 'Ekstrak bagian tanggal',
+        isi: "`strftime('%w', t)` = hari minggu ('0' Minggu, '6' Sabtu), `'%m'` = bulan, `'%j'` = hari ke-n dalam setahun. MySQL: `DAYOFWEEK(t)` (1=Minggu), `MONTH(t)`, `QUARTER(t)`, `WEEKDAY(t)` (0=Senin). Pilih yang mudah dibaca — `QUARTER(t) = 1` lebih jelas daripada `IN ('01','02','03')`.",
+        contoh: "SELECT tanggal, strftime('%w', tanggal) AS kode_hari, strftime('%m', tanggal) AS bulan FROM pesanan ORDER BY tanggal LIMIT 5;",
+      },
+      {
+        judul: 'Aritmetika & selisih tanggal',
+        isi: "SQLite: `date(t, '-7 days')`/`'+1 month'` untuk geser tanggal; `CAST(julianday(a) - julianday(b) AS INTEGER)` untuk selisih hari (julianday = hari sejak epoch Julian). MySQL lebih mudah: `DATE_ADD(t, INTERVAL 7 DAY)`, `DATE_SUB`, `DATEDIFF(a, b)`, `TIMESTAMPDIFF(MONTH, a, b)`. Ini beda terbesar dua dialek — kuasai dua-duanya.",
+        contoh: "SELECT tanggal, date(tanggal, '+7 days') AS plus_minggu, CAST(julianday('2024-09-30') - julianday(tanggal) AS INTEGER) AS selisih FROM pesanan LIMIT 5;",
+      },
+    ],
+  },
+  {
+    kategori: 'kondisional',
+    judul: 'CASE & Pivot',
+    sections: [
+      {
+        judul: 'CASE WHEN — if/then di dalam SELECT',
+        isi: "`CASE WHEN kondisi THEN nilai WHEN ... ELSE nilai END` dievaluasi berurutan — kondisi pertama yang cocok menang. Ingat: `NULL` tidak memenuhi perbandingan apa pun, jadi cek `IS NULL` lebih dulu kalau datanya bisa NULL. Bisa dipakai di SELECT, WHERE, ORDER BY, sampai GROUP BY. Sintaks identik di MySQL.",
+        contoh: "SELECT nama, harga, CASE WHEN harga < 50000 THEN 'murah' WHEN harga < 200000 THEN 'menengah' ELSE 'mahal' END AS segmen FROM produk LIMIT 5;",
+      },
+      {
+        judul: 'COALESCE & NULLIF',
+        isi: "`COALESCE(a, b, c)` = nilai pertama yang bukan NULL — untuk kolom 'fallback' (email → telepon → 'tidak ada'). `NULLIF(a, b)` = NULL kalau `a = b`, a kalau tidak — berguna menghindari bagi-nol: `total / NULLIF(nol, 0)` → NULL, bukan error.",
+        contoh: "SELECT nama, COALESCE(email, no_telepon, 'tidak ada') AS kontak FROM pelanggan LIMIT 8;",
+      },
+      {
+        judul: 'Agregasi kondisional = pivot',
+        isi: "`COUNT(CASE WHEN status='selesai' THEN 1 END)` menghitung hanya baris cocok; `SUM(CASE WHEN ... THEN nilai END)` menjumlahkan kondisional. Ulangi per kategori → kolom pivot. Inilah pengganti `PIVOT` operator (yang tidak ada di SQLite/MySQL biasa) — pola yang paling sering ditanya di interview SQL.",
+        contoh: "SELECT kota, COUNT(*) AS total, COUNT(CASE WHEN status_member = 'platinum' THEN 1 END) AS platinum FROM pelanggan GROUP BY kota ORDER BY total DESC LIMIT 5;",
+      },
+    ],
+  },
+  {
+    kategori: 'set',
+    judul: 'Set & EXISTS',
+    sections: [
+      {
+        judul: 'UNION vs UNION ALL',
+        isi: '`UNION` menggabungkan hasil dua SELECT dan membuang duplikat; `UNION ALL` mempertahankan semuanya (lebih cepat — tanpa dedup). Syarat: jumlah kolom sama & tipe cocok. ORDER BY di akhir berlaku untuk hasil gabungan.',
+        contoh: "SELECT pelanggan_id FROM pesanan UNION SELECT pelanggan_id FROM ulasan ORDER BY pelanggan_id LIMIT 10;",
+      },
+      {
+        judul: 'INTERSECT & EXCEPT',
+        isi: "`INTERSECT` = irisan (ada di dua-duanya), `EXCEPT` = selisih (di kiri tapi tidak di kanan). Keduanya dedup. MySQL 5.7 tidak punya keduanya — ekuivalennya `IN`/`NOT IN` subquery atau `EXISTS`/`NOT EXISTS` terskorelasi.",
+        contoh: "SELECT kota FROM pelanggan EXCEPT SELECT kota FROM pelanggan WHERE status_member = 'platinum';",
+      },
+      {
+        judul: 'EXISTS vs IN vs JOIN',
+        isi: "`WHERE EXISTS (SELECT 1 FROM t WHERE t.fk = outer.id)` berhenti di baris pertama cocok — cepat untuk tabel besar. `IN (subquery)` juga oke tapi hati-hati: `NOT IN` gagal total kalau subquery menghasilkan satu saja NULL — `NOT EXISTS` aman. JOIN + DISTINCT juga bisa untuk 'yang punya', tapi menggandakan baris dulu.",
+        contoh: "SELECT nama FROM pelanggan pl WHERE EXISTS (SELECT 1 FROM ulasan u WHERE u.pelanggan_id = pl.id) LIMIT 8;",
+      },
+    ],
+  },
+  {
+    kategori: 'analitik',
+    judul: 'Analitik Lanjutan',
+    sections: [
+      {
+        judul: 'LEAD & FIRST_VALUE',
+        isi: '`LEAD(kolom) OVER (PARTITION BY g ORDER BY k)` = nilai kolom di baris SETELAHNYA dalam partisi — untuk hitung jeda ke event berikutnya (kebalikan `LAG`). `FIRST_VALUE(kolom) OVER (PARTITION BY g ORDER BY ...)` = nilai di baris pertama partisi — patokan seperti "produk termurah di kategorinya".',
+        contoh: "SELECT nama, tanggal, LEAD(tanggal) OVER (PARTITION BY pelanggan_id ORDER BY tanggal) AS berikutnya FROM pesanan LIMIT 8;",
+      },
+      {
+        judul: 'Window frame: ROWS BETWEEN',
+        isi: '`AVG(x) OVER (ORDER BY t ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)` menghitung hanya jendela 3 baris terakhir → moving average. Frame lain: `UNBOUNDED PRECEDING` (dari awal → running total), `RANGE BETWEEN` (berdasar nilai, bukan posisi). Tanpa frame, default-nya `RANGE UNBOUNDED PRECEDING` — sering bikin hasil tak terduga untuk nilai seri, jadi tulis frame eksplisit.',
+        contoh: "WITH b AS (SELECT strftime('%Y-%m', tanggal) AS bulan, COUNT(*) AS n FROM pesanan GROUP BY bulan) SELECT bulan, n, AVG(n) OVER (ORDER BY bulan ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) AS ma2 FROM b;",
+      },
+      {
+        judul: 'NTILE — bagi rata jadi N kelompok',
+        isi: '`NTILE(4) OVER (ORDER BY total DESC)` membagi hasil jadi 4 kelompok sama besar berurutan → kuartil. Beda dengan `RANK` yang memberi peringkat unik per baris; NTILE memberi nomor ke-lipatan. Dipakai untuk segmentasi (spender top 25%, dst).',
+        contoh: "SELECT nama, harga, NTILE(4) OVER (ORDER BY harga DESC) AS kuartil_harga FROM produk LIMIT 10;",
+      },
+      {
+        judul: 'WITH RECURSIVE — bikin data yang tidak ada',
+        isi: "`WITH RECURSIVE t(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM t WHERE x < 10)` menghasilkan 1..10: bagian awal + langkah yang merujuk dirinya + kondisi berhenti. Dipakai untuk generate kalender/deret angka lalu LEFT JOIN data nyata — supaya hari kosong tetap muncul dengan 0. MySQL 8 juga mendukung sintaks yang sama.",
+        contoh: "WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 10) SELECT x FROM n;",
+      },
+    ],
+  },
+  {
     kategori: 'mysql',
     judul: 'Mode MySQL',
     sections: [
