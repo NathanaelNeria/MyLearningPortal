@@ -13,6 +13,10 @@ import { useDialect } from '../lib/useDialect.js';
 
 const draftKey = (id) => `belajarsql-draft-${id}`;
 
+// Hasil query solusi deterministik per soal (DB sql.js read-only singleton),
+// jadi cukup dieksekusi sekali per soal, bukan setiap submit.
+const expectedCache = new Map();
+
 export default function ChallengeDetail({ id, db }) {
   // id stabil per instance (App kirim key={id}) — nilai turunan ini cukup dihitung sekali.
   const { challenge, prev, next, kat } = useMemo(() => {
@@ -86,7 +90,11 @@ export default function ChallengeDetail({ id, db }) {
         setFeedback({ type: 'err', msg: 'Hanya query SELECT/WITH yang diizinkan.' });
         return;
       }
-      const exp = runQuery(db, challenge.solusi);
+      let exp = expectedCache.get(challenge.id);
+      if (!exp) {
+        exp = runQuery(db, challenge.solusi);
+        expectedCache.set(challenge.id, exp);
+      }
       setExpected(exp);
       const act = runQuery(db, sql);
       setResult(act);
