@@ -6,7 +6,7 @@ Database SQLite sungguhan (sql.js / WASM) berjalan di browser — tidak perlu ba
 
 ## Fitur
 
-- **77 Tantangan SQL** (12 jalur: Dasar → Filtering → String & Teks → Tanggal & Waktu → Agregasi → CASE & Pivot → JOIN → Set & EXISTS → Subquery & CTE → Window Functions → Analitik Lanjutan → Advanced) dengan auto-grading, petunjuk bertingkat, dan solusi.
+- **77 Tantangan SQL** (12 jalur: Dasar → Filtering → String & Teks → Tanggal & Waktu → Agregasi → JOIN → CASE & Pivot → Subquery & CTE → Set & EXISTS → Window Functions → Analitik Lanjutan → Advanced) dengan auto-grading, petunjuk bertingkat, dan solusi.
 - **Playground** — editor SQL bebas dengan dataset TokoNusantara; bisa dipakai sebagai tool SQL online saat tes.
 - **Mode MySQL** — toggle SQLite/MySQL di toolbar editor; yang kamu tulis pakai syntax MySQL diterjemahkan otomatis ke SQLite (backtick, `LIMIT n,m`, `DESCRIBE`, `SHOW TABLES`, `INTERVAL`, `<=>`, `DIV`, dll) plus ~70 fungsi MySQL (`IF`, `CONCAT`, `NOW`, `DATEDIFF`, `DATE_FORMAT`, `DATE_ADD`...) sebagai UDF. Di Playground kamu bisa lihat SQL hasil terjemahannya.
 - **Materi** — cheat-sheet per konsep dengan contoh query yang bisa langsung dijalankan.
