@@ -5,6 +5,7 @@ import { TingkatBadge, CheckIcon } from '../components/ui.jsx';
 import { nav } from '../lib/router.js';
 
 const FILTERS_TINGKAT = ['semua', 'mudah', 'sedang', 'sulit'];
+const KATEGORI_NAMA = new Map(KATEGORI.map((k) => [k.id, k.nama]));
 
 export default function ChallengeList({ initialKategori = 'semua' }) {
   const progress = getProgress();
@@ -25,7 +26,7 @@ export default function ChallengeList({ initialKategori = 'semua' }) {
     });
   }, [kategori, tingkat, status, q, progress]);
 
-  const katNama = (id) => KATEGORI.find((k) => k.id === id)?.nama || id;
+  const katNama = (id) => KATEGORI_NAMA.get(id) || id;
   const chip = (active) =>
     `px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
       active

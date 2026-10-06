@@ -2,23 +2,40 @@ import { TINGKAT } from '../data/challenges.js';
 
 const KEY = 'belajarsql-progress-v1';
 
+// Cache di memori: parse localStorage sekali, kembalikan referensi yang sama
+// sampai ada penulisan. Semua baca lewat load() jadi O(1) tanpa JSON.parse ulang.
+let cache = null;
+
 function load() {
+  if (cache) return cache;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      cache = JSON.parse(raw);
+      return cache;
+    }
   } catch {
     /* abaikan */
   }
-  return { solved: {}, xp: 0 };
+  cache = { solved: {}, xp: 0 };
+  return cache;
 }
 
 function save(state) {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    cache = state;
     window.dispatchEvent(new CustomEvent('belajarsql-progress'));
   } catch {
     /* abaikan */
   }
+}
+
+// Tab lain menulis KEY yang sama -> buang cache supaya baca berikutnya parse ulang.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === KEY || e.key === null) cache = null;
+  });
 }
 
 export function getProgress() {
@@ -30,14 +47,17 @@ export function isSolved(id) {
 }
 
 export function markSolved(id, tingkat) {
-  const state = load();
-  const first = !state.solved[id];
+  const cur = load();
+  const first = !cur.solved[id];
   if (first) {
+    // Salin dulu supaya cache tetap identik dengan isi localStorage kalau save() gagal.
+    const state = { ...cur, solved: { ...cur.solved } };
     state.solved[id] = { at: Date.now() };
     state.xp += TINGKAT[tingkat]?.xp || 10;
     save(state);
+    return { first, xp: state.xp };
   }
-  return { first, xp: state.xp };
+  return { first, xp: cur.xp };
 }
 
 export function solvedCount() {
@@ -68,5 +88,10 @@ export function levelInfo(xp) {
 }
 
 export function resetProgress() {
-  localStorage.removeItem(KEY);
+  cache = null;
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* abaikan */
+  }
 }

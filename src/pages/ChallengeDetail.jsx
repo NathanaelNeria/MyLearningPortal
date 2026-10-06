@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getChallenge, CHALLENGES, KATEGORI, TINGKAT } from '../data/challenges.js';
 import { runQuery, isReadOnly } from '../lib/db.js';
 import { translateMySQL } from '../lib/dialect.js';
@@ -14,7 +14,17 @@ import { useDialect } from '../lib/useDialect.js';
 const draftKey = (id) => `belajarsql-draft-${id}`;
 
 export default function ChallengeDetail({ id, db }) {
-  const challenge = getChallenge(id);
+  // id stabil per instance (App kirim key={id}) — nilai turunan ini cukup dihitung sekali.
+  const { challenge, prev, next, kat } = useMemo(() => {
+    const ch = getChallenge(id);
+    const i = CHALLENGES.findIndex((c) => c.id === id);
+    return {
+      challenge: ch,
+      prev: CHALLENGES[i - 1],
+      next: CHALLENGES[i + 1],
+      kat: KATEGORI.find((k) => k.id === ch?.kategori),
+    };
+  }, [id]);
   const [code, setCode] = useState(() => {
     try {
       return localStorage.getItem(draftKey(id)) ?? challenge?.starter ?? '';
@@ -32,10 +42,6 @@ export default function ChallengeDetail({ id, db }) {
   const [, force] = useState(0);
   const dialek = useDialect();
 
-  const idx = CHALLENGES.findIndex((c) => c.id === id);
-  const prev = CHALLENGES[idx - 1];
-  const next = CHALLENGES[idx + 1];
-  const kat = KATEGORI.find((k) => k.id === challenge?.kategori);
   const solved = challenge && getProgress().solved[challenge.id];
 
   if (!challenge) {
